@@ -3,5 +3,10 @@ package main
 import "net/http"
 
 func main() {
-	http.ListenAndServe(":8080", nil)
+	server := http.Server{
+		Addr: "127.0.0.1:8080",
+		Handler: nil,
+	}
+
+	server.ListenAndServe()
 }
