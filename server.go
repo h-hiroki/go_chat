@@ -1,23 +1,44 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
-	"golang.org/x/net/http2"
 	"net/http"
+	"time"
 )
 
-type MyHandler struct{}
+func setMessage(w http.ResponseWriter, r *http.Request) {
+	msg := []byte("Hello World!")
+	c := http.Cookie{
+		Name: "flash",
+		Value: base64.URLEncoding.EncodeToString(msg),
+	}
+	http.SetCookie(w, &c)
+}
 
-func (h *MyHandler) ServeHTTP (w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
+func showMessage(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("flash")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			fmt.Fprintln(w, "no messages ...")
+		}
+	} else {
+		rc := http.Cookie{
+			Name: "flash",
+			MaxAge: -1,
+			Expires: time.Unix(1, 0),
+		}
+		http.SetCookie(w, &rc)
+		val, _ := base64.URLEncoding.DecodeString(c.Value)
+		fmt.Fprintln(w, string(val))
+	}
 }
 
 func main() {
-	handler := MyHandler{}
 	server := http.Server{
 		Addr: "127.0.0.1:8080",
-		Handler: &handler,
 	}
-	http2.ConfigureServer(&server, &http2.Server{})
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	http.HandleFunc("/set_message", setMessage)
+	http.HandleFunc("/show_message", showMessage)
+	server.ListenAndServe()
 }
