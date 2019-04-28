@@ -2,22 +2,18 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/net/http2"
 	"net/http"
 )
 
-type MyHandler struct{}
-
-func (h *MyHandler) ServeHTTP (w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
+func headers(w http.ResponseWriter, r *http.Request) {
+	h := r.Header
+	fmt.Fprintln(w, h)
 }
 
 func main() {
-	handler := MyHandler{}
-	server := http.Server{
+	server := http.Server {
 		Addr: "127.0.0.1:8080",
-		Handler: &handler,
 	}
-	http2.ConfigureServer(&server, &http2.Server{})
-	server.ListenAndServeTLS("cert.pem", "key.pem")
+	http.HandleFunc("/headers", headers)
+	server.ListenAndServe()
 }
