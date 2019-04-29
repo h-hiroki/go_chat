@@ -1,39 +1,45 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 type Post struct {
-	Id	 	int
-	Content	string
-	Author 	string
+	Id 			int			`json:"id"`
+	Content 	string		`json:"content"`
+	Author		Author		`json:"author"`
+	Comments 	[]Comment	`json:"comments"`
 }
 
-var PostById map[int]*Post
-var PostByAuthor map[string][]*Post
+type Author struct {
+	Id		int		`json:"id"`
+	Name	string	`json:"name"`
+}
 
-func store(post Post) {
-	PostById[post.Id] = &post
-	PostByAuthor[post.Author] = append(PostByAuthor[post.Author], &post)
+type Comment struct {
+	Id		int		`json:"id"`
+	Comment	string	`json:"comment"`
+	Author	string	`json:"author"`
 }
 
 func main() {
-	PostById = make(map[int]*Post)
-	PostByAuthor = make(map[string][]*Post)
-
-	post1 := Post{Id: 1, Content: "saisyo", Author:"hhiroki"}
-	post2 := Post{Id: 2, Content: "nibanme", Author:"hhiroki"}
-	post3 := Post{Id: 3, Content: "sanbanme", Author:"hhiroki"}
-	post4 := Post{Id: 4, Content: "saigo", Author:"hhiroki"}
-
-	store(post1)
-	store(post2)
-	store(post3)
-	store(post4)
-
-	fmt.Println(PostById[1])
-	fmt.Println(PostById[2])
-
-	for _, post := range PostByAuthor["hhiroki"] {
-		fmt.Println(post)
+	jsonFile, err := os.Open("post.json")
+	if err != nil {
+		fmt.Println("Error opening JSON file:", err)
+		return
 	}
+	defer jsonFile.Close()
+
+	jsonData, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		fmt.Println("Error reading JSON data:", err)
+		return
+	}
+
+	var post Post
+	json.Unmarshal(jsonData, &post)
+	fmt.Println(post)
 }

@@ -1,0 +1,20 @@
+{
+  "id" : 1,
+  "content" : "Hello World",
+  "author" : {
+    "id" : 2,
+    "name" : "h-hiroki"
+  },
+  "comments" : [
+    {
+      "id" : 3,
+      "comment" : "have a nice day",
+      "author" : "hayashi"
+    },
+    {
+      "id" : 4,
+      "comment" : "when I was 5.",
+      "author" : "No 1 safety"
+    }
+  ]
+}
