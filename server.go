@@ -2,59 +2,109 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
+	"net/http"
+	"path"
+	"strconv"
 )
 
 type Post struct {
-	Id 			int			`json:"id"`
-	Content 	string		`json:"content"`
-	Author		Author		`json:"author"`
-	Comments 	[]Comment	`json:"comments"`
-}
-
-type Author struct {
-	Id		int		`json:"id"`
-	Name	string	`json:"name"`
-}
-
-type Comment struct {
-	Id		int		`json:"id"`
-	Content	string	`json:"content"`
+	Id 		int		`json:"id"`
+	Content string	`json:"content"`
 	Author	string	`json:"author"`
 }
 
 func main() {
-	post := Post{
-		Id: 1,
-		Content: "Hello World!",
-		Author: Author{
-			Id: 2,
-			Name: "h-hiroki",
-		},
-		Comments: []Comment{
-			Comment{
-				Id: 3,
-				Content: "1 comment",
-				Author: "osomatsu",
-			},
-			Comment{
-				Id: 4,
-				Content: "2 comment",
-				Author: "watanabe",
-			},
-		},
+	server := http.Server{
+		Addr: "127.0.0.1:8080",
 	}
+	http.HandleFunc("/post/", handleRequest)
+	server.ListenAndServe()
+}
 
-	jsonFile, err := os.Create("post.json")
+func handleRequest(w http.ResponseWriter, r *http.Request) {
+	var err error
+	switch r.Method {
+	case "GET":
+		err = handleGet(w, r)
+	case "POST":
+		err = handlePost(w, r)
+	case "PUT":
+		err = handlePut(w, r)
+	case "DELETE":
+		err = handleDelete(w, r)
+	}
 	if err != nil {
-		fmt.Println("Error creating JSON file:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	encoder := json.NewEncoder(jsonFile)
-	err = encoder.Encode(&post)
+}
+
+func handleGet(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil {
-		fmt.Println("Error encoding JSON to file:", err)
 		return
 	}
+	post, err := retrieve(id)
+	if err != nil {
+		return
+	}
+	output, err := json.MarshalIndent(&post, "", "\t\t")
+	if err != nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(output)
+	return
+}
+
+func handlePost(w http.ResponseWriter, r *http.Request) (err error) {
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	var post Post
+	json.Unmarshal(body, &post)
+	err = post.create()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func handlePut(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	post, err := retrieve(id)
+	if err != nil {
+		return
+	}
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	json.Unmarshal(body, &post)
+	err = post.update()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	post, err := retrieve(id)
+	if err != nil {
+		return
+	}
+	err = post.delete()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
 }
