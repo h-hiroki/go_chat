@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 )
 
 type Post struct {
@@ -21,25 +20,40 @@ type Author struct {
 
 type Comment struct {
 	Id		int		`json:"id"`
-	Comment	string	`json:"comment"`
+	Content	string	`json:"content"`
 	Author	string	`json:"author"`
 }
 
 func main() {
-	jsonFile, err := os.Open("post.json")
+	post := Post{
+		Id: 1,
+		Content: "Hello World!",
+		Author: Author{
+			Id: 2,
+			Name: "h-hiroki",
+		},
+		Comments: []Comment{
+			Comment{
+				Id: 3,
+				Content: "1 comment",
+				Author: "osomatsu",
+			},
+			Comment{
+				Id: 4,
+				Content: "2 comment",
+				Author: "watanabe",
+			},
+		},
+	}
+
+	output, err := json.MarshalIndent(&post, "", "\t\t")
 	if err != nil {
-		fmt.Println("Error opening JSON file:", err)
+		fmt.Println("Error marshalling to JSON:", err)
 		return
 	}
-	defer jsonFile.Close()
-
-	jsonData, err := ioutil.ReadAll(jsonFile)
+	err = ioutil.WriteFile("post.json", output, 0644)
 	if err != nil {
-		fmt.Println("Error reading JSON data:", err)
+		fmt.Println("Error writing JSON to file:", err)
 		return
 	}
-
-	var post Post
-	json.Unmarshal(jsonData, &post)
-	fmt.Println(post)
 }
