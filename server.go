@@ -1,21 +1,39 @@
 package main
 
-import (
-	"html/template"
-	"net/http"
-)
+import "fmt"
 
+type Post struct {
+	Id	 	int
+	Content	string
+	Author 	string
+}
 
-func process(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("tmpl.html")
-	dayOfWeek := []string{"月", "火", "水", "木", "金", "土", "日"}
-	t.Execute(w, dayOfWeek)
+var PostById map[int]*Post
+var PostByAuthor map[string][]*Post
+
+func store(post Post) {
+	PostById[post.Id] = &post
+	PostByAuthor[post.Author] = append(PostByAuthor[post.Author], &post)
 }
 
 func main() {
-	server := http.Server{
-		Addr: "127.0.0.1:8080",
+	PostById = make(map[int]*Post)
+	PostByAuthor = make(map[string][]*Post)
+
+	post1 := Post{Id: 1, Content: "saisyo", Author:"hhiroki"}
+	post2 := Post{Id: 2, Content: "nibanme", Author:"hhiroki"}
+	post3 := Post{Id: 3, Content: "sanbanme", Author:"hhiroki"}
+	post4 := Post{Id: 4, Content: "saigo", Author:"hhiroki"}
+
+	store(post1)
+	store(post2)
+	store(post3)
+	store(post4)
+
+	fmt.Println(PostById[1])
+	fmt.Println(PostById[2])
+
+	for _, post := range PostByAuthor["hhiroki"] {
+		fmt.Println(post)
 	}
-	http.HandleFunc("/process", process)
-	server.ListenAndServe()
 }
