@@ -1,39 +1,110 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"net/http"
+	"path"
+	"strconv"
+)
 
 type Post struct {
-	Id	 	int
-	Content	string
-	Author 	string
-}
-
-var PostById map[int]*Post
-var PostByAuthor map[string][]*Post
-
-func store(post Post) {
-	PostById[post.Id] = &post
-	PostByAuthor[post.Author] = append(PostByAuthor[post.Author], &post)
+	Id 		int		`json:"id"`
+	Content string	`json:"content"`
+	Author	string	`json:"author"`
 }
 
 func main() {
-	PostById = make(map[int]*Post)
-	PostByAuthor = make(map[string][]*Post)
-
-	post1 := Post{Id: 1, Content: "saisyo", Author:"hhiroki"}
-	post2 := Post{Id: 2, Content: "nibanme", Author:"hhiroki"}
-	post3 := Post{Id: 3, Content: "sanbanme", Author:"hhiroki"}
-	post4 := Post{Id: 4, Content: "saigo", Author:"hhiroki"}
-
-	store(post1)
-	store(post2)
-	store(post3)
-	store(post4)
-
-	fmt.Println(PostById[1])
-	fmt.Println(PostById[2])
-
-	for _, post := range PostByAuthor["hhiroki"] {
-		fmt.Println(post)
+	server := http.Server{
+		Addr: "127.0.0.1:8080",
 	}
+	http.HandleFunc("/post/", handleRequest)
+	server.ListenAndServe()
+}
+
+func handleRequest(w http.ResponseWriter, r *http.Request) {
+	var err error
+	switch r.Method {
+	case "GET":
+		err = handleGet(w, r)
+	case "POST":
+		err = handlePost(w, r)
+	case "PUT":
+		err = handlePut(w, r)
+	case "DELETE":
+		err = handleDelete(w, r)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func handleGet(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	post, err := retrieve(id)
+	if err != nil {
+		return
+	}
+	output, err := json.MarshalIndent(&post, "", "\t\t")
+	if err != nil {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(output)
+	return
+}
+
+func handlePost(w http.ResponseWriter, r *http.Request) (err error) {
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	var post Post
+	json.Unmarshal(body, &post)
+	err = post.create()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func handlePut(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	post, err := retrieve(id)
+	if err != nil {
+		return
+	}
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	json.Unmarshal(body, &post)
+	err = post.update()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) (err error) {
+	id, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		return
+	}
+	post, err := retrieve(id)
+	if err != nil {
+		return
+	}
+	err = post.delete()
+	if err != nil {
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
 }
