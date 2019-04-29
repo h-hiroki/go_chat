@@ -8,7 +8,8 @@ import (
 
 func process(w http.ResponseWriter, r *http.Request) {
 	t, _ := template.ParseFiles("tmpl.html")
-	t.Execute(w, "Hello World")
+	dayOfWeek := []string{"月", "火", "水", "木", "金", "土", "日"}
+	t.Execute(w, dayOfWeek)
 }
 
 func main() {
