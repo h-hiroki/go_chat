@@ -3,6 +3,6 @@ module github.com/h-hiroki/go_chat
 go 1.12
 
 require (
-	github.com/lib/pq v1.1.0 // indirect
+	github.com/lib/pq v1.1.0
 	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6 // indirect
 )
