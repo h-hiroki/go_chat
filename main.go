@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type Post struct {
+type TPost struct {
 	Id 		int 		`json:"id"`
 	Content string 		`json:"content"`
 	Author 	Author 		`json:"author"`
@@ -24,7 +24,7 @@ type Comment struct {
 	Author	string	`json:"author"`
 }
 
-func decode(filename string) (post Post, err error) {
+func decode(filename string) (post TPost, err error) {
 	jsonFile, err := os.Open(filename)
 	if err != nil {
 		fmt.Println("Error opening JSON file:", err)
@@ -41,7 +41,7 @@ func decode(filename string) (post Post, err error) {
 	return
 }
 
-func main() {
+func executeDecode() {
 	_, err := decode("post.json")
 	if err != nil {
 		fmt.Println("Error:", err)
